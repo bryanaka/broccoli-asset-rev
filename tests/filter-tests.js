@@ -7,7 +7,7 @@ var broccoli = require('broccoli');
 var mergeTrees = require('broccoli-merge-trees');
 
 var assetRev  = require('../lib/asset-rev');
-
+var OldDate = Date;
 var builder;
 
 function confirmOutput(actualPath, expectedPath) {
@@ -123,6 +123,44 @@ describe('broccoli-asset-rev', function() {
     builder = new broccoli.Builder(tree);
     return builder.build().then(function(graph) {
       confirmOutput(graph.directory, sourcePath + '/output');
+    });
+  });
+
+  it('creates a sprockets-style manifest', function(){
+    var sourcePath = 'tests/fixtures/manifest';
+    Date = function() {
+      return new OldDate(2015, 0, 1);
+    }
+
+    var tree = assetRev(sourcePath + '/input', {
+      extensions: ['js', 'css', 'png', 'jpg', 'gif', 'map'],
+      replaceExtensions: ['html', 'js', 'css'],
+      generateRailsManifest: true
+    });
+
+    builder = new broccoli.Builder(tree);
+    return builder.build().then(function(graph) {
+      confirmOutput(graph.directory, sourcePath + '/output');
+      Date = OldDate;
+    });
+  });
+
+  it('merges the generated manifest with the sprockets manifest', function(){
+    var sourcePath = 'tests/fixtures/existing-manifest';
+    Date = function() {
+      return new OldDate(2015, 0, 1);
+    }
+
+    var tree = assetRev(sourcePath + '/input', {
+      extensions: ['js', 'css', 'png', 'jpg', 'gif', 'map'],
+      replaceExtensions: ['html', 'js', 'css'],
+      generateRailsManifest: true
+    });
+
+    builder = new broccoli.Builder(tree);
+    return builder.build().then(function(graph) {
+      confirmOutput(graph.directory, sourcePath + '/output');
+      Date = OldDate;
     });
   });
 });
